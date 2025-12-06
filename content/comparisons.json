@@ -1,0 +1,54 @@
+{
+  "generatedAt": "2025-12-05T22:57:23.465Z",
+  "comparisons": [
+    {
+      "id": "compare-5200",
+      "title": "Compare 5200 Models",
+      "products": [
+        "1-x-48-ounce-stainless-steel-container",
+        "5200-legacy-bundle",
+        "5200-standard-getting-started"
+      ],
+      "attributes": [
+        "price",
+        "warranty",
+        "features"
+      ]
+    },
+    {
+      "id": "compare-ascent-x",
+      "title": "Compare ASCENT-X Models",
+      "products": [
+        "ascent-x5-smartprep-kitchen-system",
+        "ascent-x4-gourmet-smartprep-kitchen-system",
+        "ascent-x2-smartprep-kitchen-system",
+        "ascent-x-series-ascent-x5-with-stainless-steel-con",
+        "ascent-x5",
+        "ascent-x4",
+        "ascent-x3",
+        "ascent-x2"
+      ],
+      "attributes": [
+        "price",
+        "warranty",
+        "features"
+      ]
+    },
+    {
+      "id": "compare-entry-vs-premium",
+      "title": "Entry-Level vs Premium",
+      "products": [
+        "1-x-48-ounce-stainless-steel-container",
+        "5200-legacy-bundle",
+        "ascent-x5-smartprep-kitchen-system",
+        "ascent-x4-gourmet-smartprep-kitchen-system"
+      ],
+      "attributes": [
+        "price",
+        "warranty",
+        "features",
+        "series"
+      ]
+    }
+  ]
+}

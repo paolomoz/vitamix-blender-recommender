@@ -1,0 +1,11 @@
+name = "vitamix-recommender"
+main = "src/index.ts"
+compatibility_date = "2024-01-01"
+
+[vars]
+ENVIRONMENT = "development"
+
+# Secrets (set via wrangler secret put):
+# - CEREBRAS_KEY
+# - FAL_API_KEY
+# - DA_IMS_TOKEN

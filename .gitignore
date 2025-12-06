@@ -2,8 +2,14 @@
 coverage/*
 logs/*
 node_modules/*
+tools/scraper/node_modules/*
+workers/vitamix-recommender/node_modules/*
+workers/vitamix-recommender/.wrangler/*
+tools/scraper/test-screenshots/*
+content/images/*
 
 helix-importer-ui
 .DS_Store
 *.bak
 .idea
+.env

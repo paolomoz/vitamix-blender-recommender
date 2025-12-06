@@ -1,0 +1,78 @@
+/* Needs Explorer Block */
+.needs-explorer {
+  padding: 48px 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.needs-explorer.loaded {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.needs-explorer-title {
+  text-align: center;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin: 0 0 32px;
+}
+
+.needs-explorer-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.needs-explorer-card {
+  background: white;
+  border: 2px solid #e9ecef;
+  border-radius: 12px;
+  padding: 24px;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  /* Override base button styles to allow multiline text */
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+  width: 100%;
+}
+
+.needs-explorer-card:hover {
+  border-color: #1a1a2e;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.needs-explorer-card-name {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1a1a2e;
+  margin: 0 0 8px;
+}
+
+.needs-explorer-card-description {
+  font-size: 0.9375rem;
+  color: #6c757d;
+  margin: 0;
+  line-height: 1.5;
+}
+
+@media (min-width: 900px) {
+  .needs-explorer {
+    padding: 80px 48px;
+  }
+
+  .needs-explorer-title {
+    font-size: 2rem;
+    margin-bottom: 48px;
+  }
+
+  .needs-explorer-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}

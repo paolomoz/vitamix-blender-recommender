@@ -1,0 +1,94 @@
+/* Price Comparison Block */
+.price-comparison {
+  padding: 48px 24px;
+  max-width: 900px;
+  margin: 0 auto;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.price-comparison.loaded {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.price-comparison-title {
+  text-align: center;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin: 0 0 32px;
+}
+
+.price-comparison-tiers {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.price-comparison-tier {
+  background: white;
+  border: 2px solid #e9ecef;
+  border-radius: 12px;
+  padding: 20px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.price-comparison-tier:hover {
+  border-color: #1a1a2e;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.price-tier-header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.price-tier-name {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1a1a2e;
+}
+
+.price-tier-range {
+  font-size: 0.875rem;
+  color: #6c757d;
+}
+
+.price-tier-product {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.price-tier-product-name {
+  font-size: 0.9375rem;
+  color: #495057;
+}
+
+.price-tier-price {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1a1a2e;
+}
+
+@media (min-width: 900px) {
+  .price-comparison {
+    padding: 80px 48px;
+  }
+
+  .price-comparison-title {
+    font-size: 2rem;
+  }
+
+  .price-comparison-tier {
+    padding: 24px 32px;
+  }
+}

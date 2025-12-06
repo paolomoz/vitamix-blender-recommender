@@ -1,0 +1,140 @@
+/* Proactive Insight Block */
+
+.proactive-insight {
+  padding: 24px;
+  max-width: 700px;
+  margin: 0 auto;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.proactive-insight.loaded {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.proactive-insight-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  background: linear-gradient(135deg, #f8f9fa 0%, #fff 100%);
+  border: 1px solid #e9ecef;
+  border-left: 4px solid #1a1a2e;
+  border-radius: 12px;
+  padding: 20px 24px;
+  transition: all 0.2s ease;
+  /* Override base button styles to allow multiline text */
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+  text-align: left;
+  cursor: pointer;
+  width: 100%;
+}
+
+.proactive-insight-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
+}
+
+/* Type-specific colors */
+.proactive-insight-card[data-type="hidden-value"] {
+  border-left-color: #198754;
+}
+
+.proactive-insight-card[data-type="hidden-value"] .proactive-insight-icon {
+  color: #198754;
+}
+
+.proactive-insight-card[data-type="cross-sell"] {
+  border-left-color: #0d6efd;
+}
+
+.proactive-insight-card[data-type="cross-sell"] .proactive-insight-icon {
+  color: #0d6efd;
+}
+
+.proactive-insight-card[data-type="buying-tip"] {
+  border-left-color: #ffc107;
+}
+
+.proactive-insight-card[data-type="buying-tip"] .proactive-insight-icon {
+  color: #c99700;
+}
+
+.proactive-insight-card[data-type="use-case"] {
+  border-left-color: #6f42c1;
+}
+
+.proactive-insight-card[data-type="use-case"] .proactive-insight-icon {
+  color: #6f42c1;
+}
+
+.proactive-insight-card[data-type="comparative"] {
+  border-left-color: #20c997;
+}
+
+.proactive-insight-card[data-type="comparative"] .proactive-insight-icon {
+  color: #20c997;
+}
+
+.proactive-insight-icon {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  border-radius: 10px;
+  color: #1a1a2e;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.proactive-insight-content {
+  flex: 1;
+}
+
+.proactive-insight-label {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #6c757d;
+  margin-bottom: 6px;
+}
+
+.proactive-insight-text {
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  color: #1a1a2e;
+  margin: 0;
+}
+
+/* Section styling */
+.section.proactive-insight-container {
+  background: transparent;
+}
+
+/* Mobile adjustments */
+@media (max-width: 600px) {
+  .proactive-insight {
+    padding: 16px;
+  }
+
+  .proactive-insight-card {
+    padding: 16px;
+    gap: 12px;
+  }
+
+  .proactive-insight-icon {
+    width: 36px;
+    height: 36px;
+  }
+
+  .proactive-insight-text {
+    font-size: 0.875rem;
+  }
+}

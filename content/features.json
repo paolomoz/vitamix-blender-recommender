@@ -1,0 +1,60 @@
+{
+  "generatedAt": "2025-12-05T22:57:23.465Z",
+  "features": [
+    {
+      "id": "self-cleaning",
+      "name": "Self-Cleaning",
+      "description": "Add warm water and a drop of dish soap, and your Vitamix cleans itself in 30-60 seconds.",
+      "availableOn": [
+        "ascent-x",
+        "5200",
+        "explorian"
+      ]
+    },
+    {
+      "id": "variable-speed",
+      "name": "Variable Speed Control",
+      "description": "Dial in the perfect texture for any recipe, from chunky salsa to silky smoothies.",
+      "availableOn": [
+        "ascent-x",
+        "5200",
+        "explorian"
+      ]
+    },
+    {
+      "id": "blending-programs",
+      "name": "Blending Programs",
+      "description": "Preset programs for common recipes ensure consistent results every time.",
+      "availableOn": [
+        "ascent-x"
+      ]
+    },
+    {
+      "id": "touch-interface",
+      "name": "Touch Interface",
+      "description": "Intuitive touch controls with digital display for precise blending.",
+      "availableOn": [
+        "ascent-x"
+      ]
+    },
+    {
+      "id": "stainless-container",
+      "name": "Stainless Steel Container",
+      "description": "Durable, stain and odor resistant, perfect for hot and cold ingredients.",
+      "availableOn": [
+        "ascent-x",
+        "5200"
+      ]
+    },
+    {
+      "id": "laser-cut-blades",
+      "name": "Laser-Cut Stainless Steel Blades",
+      "description": "Hardened blades that never need sharpening, designed to pulverize the toughest ingredients.",
+      "availableOn": [
+        "ascent-x",
+        "5200",
+        "explorian"
+      ]
+    }
+  ]
+}

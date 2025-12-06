@@ -1,0 +1,66 @@
+{
+  "generatedAt": "2025-12-05T22:57:23.465Z",
+  "useCases": [
+    {
+      "id": "smoothies",
+      "name": "Daily Smoothies",
+      "description": "Blend fruits, vegetables, and proteins into silky smoothies every morning.",
+      "icon": "smoothie",
+      "recommendedSeries": [
+        "ascent-x",
+        "5200",
+        "explorian"
+      ]
+    },
+    {
+      "id": "soups",
+      "name": "Hot Soups",
+      "description": "Create steaming hot soups from raw ingredients in minutes using blade friction.",
+      "icon": "soup",
+      "recommendedSeries": [
+        "ascent-x",
+        "5200"
+      ]
+    },
+    {
+      "id": "nut-butters",
+      "name": "Nut Butters",
+      "description": "Grind nuts into creamy or chunky butters with no additives.",
+      "icon": "nut-butter",
+      "recommendedSeries": [
+        "ascent-x",
+        "5200"
+      ]
+    },
+    {
+      "id": "frozen-desserts",
+      "name": "Frozen Desserts",
+      "description": "Turn frozen fruits into healthy ice cream alternatives.",
+      "icon": "frozen-dessert",
+      "recommendedSeries": [
+        "ascent-x",
+        "5200"
+      ]
+    },
+    {
+      "id": "meal-prep",
+      "name": "Meal Prep",
+      "description": "Batch prepare ingredients for the week ahead.",
+      "icon": "meal-prep",
+      "recommendedSeries": [
+        "ascent-x"
+      ]
+    },
+    {
+      "id": "baby-food",
+      "name": "Baby Food",
+      "description": "Puree fresh ingredients for homemade baby food.",
+      "icon": "baby-food",
+      "recommendedSeries": [
+        "ascent-x",
+        "5200",
+        "explorian"
+      ]
+    }
+  ]
+}

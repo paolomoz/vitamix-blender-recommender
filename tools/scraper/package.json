@@ -1,0 +1,17 @@
+{
+  "name": "vitamix-scraper",
+  "version": "1.0.0",
+  "description": "Playwright scraper for Vitamix.com product catalog",
+  "type": "module",
+  "scripts": {
+    "scrape": "node scrape-products.js",
+    "scrape:specs": "node scrape-specs.js",
+    "scrape:reviews": "node scrape-reviews.js",
+    "download:images": "node download-images.js",
+    "build": "node build-repository.js",
+    "all": "npm run scrape && npm run scrape:specs && npm run download:images && npm run build"
+  },
+  "dependencies": {
+    "playwright": "^1.40.0"
+  }
+}

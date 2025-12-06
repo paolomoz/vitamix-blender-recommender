@@ -1,0 +1,142 @@
+/* Recommendation Block with Empathetic Response Structure */
+.recommendation {
+  padding: 64px 24px;
+  max-width: 700px;
+  margin: 0 auto;
+  text-align: center;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.recommendation.loaded {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.recommendation-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #6c757d;
+  margin: 0 0 24px;
+}
+
+/* Empathetic Validation: "I hear you..." */
+.recommendation-validation {
+  font-size: 1.125rem;
+  font-style: italic;
+  color: #2d7d32;
+  line-height: 1.6;
+  margin: 0 0 16px;
+  padding: 16px 24px;
+  background: linear-gradient(135deg, #e8f5e9 0%, #f1f8f1 100%);
+  border-radius: 12px;
+  border-left: 4px solid #2d7d32;
+  text-align: left;
+}
+
+/* Understanding: "You need X..." */
+.recommendation-understanding {
+  font-size: 1rem;
+  color: #495057;
+  line-height: 1.7;
+  margin: 0 0 24px;
+  padding: 16px 20px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  text-align: left;
+}
+
+.recommendation-image {
+  margin-bottom: 24px;
+}
+
+.recommendation-image img {
+  max-width: 300px;
+  height: auto;
+}
+
+.recommendation-name {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin: 0 0 8px;
+}
+
+.recommendation-price {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1a1a2e;
+  margin: 0 0 16px;
+}
+
+.recommendation-reasoning {
+  font-size: 1rem;
+  color: #6c757d;
+  line-height: 1.6;
+  margin: 0 0 24px;
+}
+
+/* Visualization: "Imagine..." */
+.recommendation-visualization {
+  font-size: 1.125rem;
+  font-style: italic;
+  color: #1a1a2e;
+  line-height: 1.6;
+  margin: 0 0 24px;
+  padding: 20px 24px;
+  background: linear-gradient(135deg, #fff3e0 0%, #fff8f0 100%);
+  border-radius: 12px;
+  position: relative;
+}
+
+.recommendation-visualization::before {
+  content: '"';
+  position: absolute;
+  top: 8px;
+  left: 12px;
+  font-size: 3rem;
+  color: #e65100;
+  opacity: 0.2;
+  font-family: Georgia, serif;
+  line-height: 1;
+}
+
+.recommendation-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 32px;
+  background: #1a1a2e;
+  color: white;
+  text-decoration: none;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+}
+
+.recommendation-cta:hover {
+  background: #2d2d4a;
+  transform: translateY(-2px);
+}
+
+@media (min-width: 900px) {
+  .recommendation {
+    padding: 80px 48px;
+  }
+
+  .recommendation-name {
+    font-size: 2rem;
+  }
+
+  .recommendation-validation,
+  .recommendation-understanding,
+  .recommendation-visualization {
+    margin-left: auto;
+    margin-right: auto;
+    max-width: 600px;
+  }
+}

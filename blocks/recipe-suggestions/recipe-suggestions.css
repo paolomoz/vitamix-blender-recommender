@@ -1,0 +1,78 @@
+/* Recipe Suggestions Block */
+.recipe-suggestions {
+  padding: 48px 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.recipe-suggestions.loaded {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.recipe-suggestions-title {
+  text-align: center;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin: 0 0 32px;
+}
+
+.recipe-suggestions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 24px;
+}
+
+.recipe-card {
+  background: white;
+  border: 1px solid #e9ecef;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.recipe-card:hover {
+  border-color: #1a1a2e;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.recipe-card-image {
+  aspect-ratio: 16/9;
+  overflow: hidden;
+}
+
+.recipe-card-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.recipe-card-name {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1a1a2e;
+  margin: 16px 16px 8px;
+}
+
+.recipe-card-description {
+  font-size: 0.875rem;
+  color: #6c757d;
+  margin: 0 16px 16px;
+  line-height: 1.5;
+}
+
+@media (min-width: 900px) {
+  .recipe-suggestions {
+    padding: 80px 48px;
+  }
+
+  .recipe-suggestions-title {
+    font-size: 2rem;
+  }
+}
