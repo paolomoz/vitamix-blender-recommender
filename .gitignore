@@ -7,6 +7,7 @@ workers/vitamix-recommender/node_modules/*
 workers/vitamix-recommender/.wrangler/*
 tools/scraper/test-screenshots/*
 content/images/*
+.dev.vars
 
 helix-importer-ui
 .DS_Store

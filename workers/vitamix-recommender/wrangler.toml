@@ -5,7 +5,13 @@ compatibility_date = "2024-01-01"
 [vars]
 ENVIRONMENT = "development"
 
+# Cloudflare Workers AI binding for embeddings (free!)
+[ai]
+binding = "AI"
+
 # Secrets (set via wrangler secret put):
 # - CEREBRAS_KEY
+# - ANTHROPIC_API_KEY
+# - OPENAI_API_KEY (optional fallback for RAG embeddings)
 # - FAL_API_KEY
 # - DA_IMS_TOKEN

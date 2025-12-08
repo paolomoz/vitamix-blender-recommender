@@ -6,6 +6,7 @@
 import type { Env, SessionContext, LLMModel } from './types';
 import { classifyIntent, generateFollowUps, generateProactiveInsight } from './intent';
 import { assembleBlock, assembleProactiveInsight } from './blocks';
+import { indexProducts, getVectorStore } from './rag';
 
 // CORS headers
 const corsHeaders = {
@@ -153,7 +154,32 @@ async function handleStream(request: Request, env: Env): Promise<Response> {
  * Handle health check
  */
 function handleHealth(): Response {
-  return new Response(JSON.stringify({ status: 'ok', service: 'vitamix-recommender' }), {
+  const store = getVectorStore();
+  return new Response(JSON.stringify({
+    status: 'ok',
+    service: 'vitamix-recommender',
+    rag: {
+      indexed: store.size() > 0,
+      chunks: store.size(),
+    },
+  }), {
+    headers: { 'Content-Type': 'application/json', ...corsHeaders },
+  });
+}
+
+/**
+ * Handle RAG indexing (admin endpoint)
+ */
+async function handleIndexing(request: Request, env: Env): Promise<Response> {
+  const url = new URL(request.url);
+  const limit = url.searchParams.get('limit');
+  const limitNum = limit ? parseInt(limit, 10) : undefined;
+
+  console.log(`[Admin] Starting RAG indexing${limitNum ? ` (limited to ${limitNum} products)` : ''}...`);
+
+  const result = await indexProducts(env, undefined, limitNum);
+
+  return new Response(JSON.stringify(result), {
     headers: { 'Content-Type': 'application/json', ...corsHeaders },
   });
 }
@@ -185,6 +211,9 @@ export default {
     switch (path) {
       case '/api/stream':
         return handleStream(request, env);
+      case '/api/index':
+        // Admin endpoint to trigger RAG indexing
+        return handleIndexing(request, env);
       case '/health':
       case '/':
         return handleHealth();

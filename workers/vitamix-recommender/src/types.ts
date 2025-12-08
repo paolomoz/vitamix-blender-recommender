@@ -5,9 +5,11 @@
 export interface Env {
   CEREBRAS_KEY: string;
   ANTHROPIC_API_KEY: string;
+  OPENAI_API_KEY?: string;
   FAL_API_KEY: string;
   DA_IMS_TOKEN: string;
   ENVIRONMENT: string;
+  AI?: any; // Cloudflare Workers AI binding
 }
 
 export type LLMModel = 'cerebras' | 'claude';

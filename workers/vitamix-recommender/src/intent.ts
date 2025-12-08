@@ -6,6 +6,7 @@
 import type { Env, Intent, SessionContext, LLMModel } from './types';
 import { detectPersona, findObjectionResponse, userPersonas, objectionLibrary, type UserPersona } from './content';
 import { callLLM, parseJsonFromResponse } from './llm';
+import { retrieveContext, formatContextForLLM, getVectorStore } from './rag';
 
 const INTENT_SYSTEM_PROMPT = `You are an intent classifier for a Vitamix blender recommendation system.
 Analyze the user's query and return a JSON object with the following structure:
@@ -79,9 +80,29 @@ export async function classifyIntent(
     : `Query: "${query}"`;
 
   try {
+    // RAG: Retrieve relevant product context if vector store is populated
+    let ragContext = '';
+    const store = getVectorStore();
+    if (store.size() > 0 && (env.AI || env.OPENAI_API_KEY)) {
+      try {
+        console.log('[Intent] Retrieving RAG context...');
+        const results = await retrieveContext(query, env, { topK: 3, minScore: 0.6 });
+        if (results.length > 0) {
+          ragContext = '\n\n' + formatContextForLLM(results);
+          console.log(`[Intent] Added ${results.length} RAG results to context`);
+        }
+      } catch (error) {
+        console.warn('[Intent] RAG retrieval failed, continuing without RAG:', error);
+      }
+    }
+
+    const enhancedSystemPrompt = ragContext
+      ? `${INTENT_SYSTEM_PROMPT}\n\n${ragContext}`
+      : INTENT_SYSTEM_PROMPT;
+
     const response = await callLLM(
       {
-        systemPrompt: INTENT_SYSTEM_PROMPT,
+        systemPrompt: enhancedSystemPrompt,
         userMessage,
         temperature: 0.1,
         maxTokens: 500,
