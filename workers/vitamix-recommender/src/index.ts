@@ -6,7 +6,7 @@
 import type { Env, SessionContext, LLMModel } from './types';
 import { classifyIntent, generateFollowUps, generateProactiveInsight } from './intent';
 import { assembleBlock, assembleProactiveInsight } from './blocks';
-import { indexProducts, getVectorStore } from './rag';
+import { indexProducts, indexProductsLocal, getVectorStore } from './rag';
 
 // CORS headers
 const corsHeaders = {
@@ -168,16 +168,70 @@ function handleHealth(): Response {
 }
 
 /**
+ * View indexed chunks (admin endpoint)
+ */
+function handleViewIndex(request: Request): Response {
+  const url = new URL(request.url);
+  const limit = parseInt(url.searchParams.get('limit') || '50', 10);
+  const type = url.searchParams.get('type'); // Filter by type
+  const product = url.searchParams.get('product'); // Filter by product title
+
+  const store = getVectorStore();
+  let chunks = store.getAllChunks();
+
+  // Apply filters
+  if (type) {
+    chunks = chunks.filter(chunk => chunk.metadata.type === type);
+  }
+  if (product) {
+    chunks = chunks.filter(chunk =>
+      chunk.metadata.productTitle.toLowerCase().includes(product.toLowerCase())
+    );
+  }
+
+  // Limit results
+  const limitedChunks = chunks.slice(0, limit);
+
+  // Format for display (remove embeddings for readability)
+  const displayChunks = limitedChunks.map(chunk => ({
+    id: chunk.id,
+    content: chunk.content.substring(0, 200) + (chunk.content.length > 200 ? '...' : ''),
+    fullContent: chunk.content,
+    metadata: chunk.metadata,
+    hasEmbedding: !!chunk.embedding,
+    embeddingDimensions: chunk.embedding?.length || 0,
+  }));
+
+  return new Response(JSON.stringify({
+    total: store.size(),
+    filtered: chunks.length,
+    showing: displayChunks.length,
+    chunks: displayChunks,
+  }, null, 2), {
+    headers: { 'Content-Type': 'application/json', ...corsHeaders },
+  });
+}
+
+/**
  * Handle RAG indexing (admin endpoint)
  */
 async function handleIndexing(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
   const limit = url.searchParams.get('limit');
-  const limitNum = limit ? parseInt(limit, 10) : undefined;
+  const source = url.searchParams.get('source') || 'local'; // 'local' or 'scrape'
 
-  console.log(`[Admin] Starting RAG indexing${limitNum ? ` (limited to ${limitNum} products)` : ''}...`);
+  let result;
 
-  const result = await indexProducts(env, undefined, limitNum);
+  if (source === 'local') {
+    // Use existing product data from content.ts (no scraping)
+    console.log('[Admin] Starting local RAG indexing (no scraping)...');
+    result = await indexProductsLocal(env);
+  } else {
+    // Scrape from sitemap (may trigger Cloudflare protection)
+    const limitNum = limit ? parseInt(limit, 10) : undefined;
+    console.log(`[Admin] Starting RAG indexing from scraping${limitNum ? ` (limited to ${limitNum} products)` : ''}...`);
+    result = await indexProducts(env, undefined, limitNum);
+  }
 
   return new Response(JSON.stringify(result), {
     headers: { 'Content-Type': 'application/json', ...corsHeaders },
@@ -214,6 +268,9 @@ export default {
       case '/api/index':
         // Admin endpoint to trigger RAG indexing
         return handleIndexing(request, env);
+      case '/api/view-index':
+        // Admin endpoint to view indexed chunks
+        return handleViewIndex(request);
       case '/health':
       case '/':
         return handleHealth();

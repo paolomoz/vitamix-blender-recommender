@@ -1,10 +1,11 @@
 /**
  * Embeddings Generation
- * Supports Cloudflare Workers AI (default) and OpenAI (fallback)
+ * Supports multiple providers: Cloudflare Workers AI, OpenAI, Cohere, and Mock (for testing)
  */
 
 import type { Env } from '../types';
 import type { DocumentChunk } from './types';
+import { generateMockEmbedding } from './embeddings-mock';
 
 /**
  * Generate embedding using Cloudflare Workers AI
@@ -61,23 +62,80 @@ async function generateEmbeddingWithOpenAI(text: string, env: Env): Promise<numb
 }
 
 /**
+ * Generate embedding using Cohere (free tier available)
+ */
+async function generateEmbeddingWithCohere(text: string, env: Env): Promise<number[]> {
+  if (!env.COHERE_API_KEY) {
+    throw new Error('COHERE_API_KEY is not configured');
+  }
+
+  try {
+    const response = await fetch('https://api.cohere.ai/v1/embed', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${env.COHERE_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        texts: [text.substring(0, 8000)],
+        model: 'embed-english-light-v3.0',
+        input_type: 'search_document',
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Cohere API error: ${response.status} ${error}`);
+    }
+
+    const data = await response.json();
+    return data.embeddings[0];
+  } catch (error) {
+    console.error('[RAG Embeddings] Cohere failed:', error);
+    throw error;
+  }
+}
+
+/**
  * Generate embedding for a single text
- * Automatically uses Workers AI if available, falls back to OpenAI
+ * Automatically detects available provider and uses fallback chain
  */
 export async function generateEmbedding(text: string, env: Env): Promise<number[]> {
-  // Prefer Cloudflare Workers AI (free, fast, no API key needed)
+  // Try providers in order of preference, with automatic fallback on failure
+
+  // 1. Cloudflare Workers AI (free, fast, no API key needed)
   if (env.AI) {
-    console.log('[RAG Embeddings] Using Cloudflare Workers AI');
-    return generateEmbeddingWithWorkersAI(text, env);
+    try {
+      console.log('[RAG Embeddings] Trying Cloudflare Workers AI...');
+      return await generateEmbeddingWithWorkersAI(text, env);
+    } catch (error) {
+      console.warn('[RAG Embeddings] Workers AI failed, trying next provider...', error);
+    }
   }
 
-  // Fallback to OpenAI
+  // 2. Cohere (free tier, easy to get API key)
+  if (env.COHERE_API_KEY) {
+    try {
+      console.log('[RAG Embeddings] Trying Cohere...');
+      return await generateEmbeddingWithCohere(text, env);
+    } catch (error) {
+      console.warn('[RAG Embeddings] Cohere failed, trying next provider...', error);
+    }
+  }
+
+  // 3. OpenAI (paid, high quality)
   if (env.OPENAI_API_KEY) {
-    console.log('[RAG Embeddings] Using OpenAI (fallback)');
-    return generateEmbeddingWithOpenAI(text, env);
+    try {
+      console.log('[RAG Embeddings] Trying OpenAI...');
+      return await generateEmbeddingWithOpenAI(text, env);
+    } catch (error) {
+      console.warn('[RAG Embeddings] OpenAI failed, falling back to mock...', error);
+    }
   }
 
-  throw new Error('No embedding provider configured. Please set up Cloudflare Workers AI binding or OPENAI_API_KEY');
+  // 4. Mock embeddings (for testing without any API keys)
+  console.warn('[RAG Embeddings] ⚠️  Using MOCK embeddings (testing only - not production quality)');
+  return generateMockEmbedding(text, 384);
 }
 
 /**

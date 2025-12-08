@@ -44,5 +44,6 @@ export {
   getProductRecommendations,
 } from './retrieval';
 
-// Main indexing function
+// Main indexing functions
 export { indexProducts } from './indexer';
+export { indexProductsLocal } from './indexer-local';

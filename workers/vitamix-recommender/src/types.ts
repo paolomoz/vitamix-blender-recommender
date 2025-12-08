@@ -6,6 +6,7 @@ export interface Env {
   CEREBRAS_KEY: string;
   ANTHROPIC_API_KEY: string;
   OPENAI_API_KEY?: string;
+  COHERE_API_KEY?: string;
   FAL_API_KEY: string;
   DA_IMS_TOKEN: string;
   ENVIRONMENT: string;
