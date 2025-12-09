@@ -25,8 +25,9 @@ export default function decorate(block) {
     .map((s) => s.trim())
     .filter(Boolean);
 
-  // Get current model from session
+  // Get current model and RAG status from session
   const currentModel = window.SessionContextManager?.getModel() || 'claude';
+  const ragEnabled = window.SessionContextManager?.getRAGEnabled() ?? true;
 
   // Build the conversation bar UI
   block.innerHTML = `
@@ -39,15 +40,23 @@ export default function decorate(block) {
             </button>
           `).join('')}
         </div>
-        <div class="model-selector">
-          <button type="button" class="model-option ${currentModel === 'cerebras' ? 'active' : ''}" data-model="cerebras" title="Cerebras Llama 3.3 70B - Fast inference">
-            <span class="model-icon">&#x26A1;</span>
-            <span class="model-name">Cerebras</span>
-          </button>
-          <button type="button" class="model-option ${currentModel === 'claude' ? 'active' : ''}" data-model="claude" title="Claude Opus 4.5 - Advanced reasoning">
-            <span class="model-icon">&#x2728;</span>
-            <span class="model-name">Claude</span>
-          </button>
+        <div class="conversation-bar-controls">
+          <div class="rag-toggle">
+            <button type="button" class="rag-toggle-btn ${ragEnabled ? 'active' : ''}" title="${ragEnabled ? 'RAG enabled - Using vector search' : 'RAG disabled - Using static data only'}">
+              <span class="rag-icon">${ragEnabled ? '&#x1F50D;' : '&#x26D4;'}</span>
+              <span class="rag-label">RAG</span>
+            </button>
+          </div>
+          <div class="model-selector">
+            <button type="button" class="model-option ${currentModel === 'cerebras' ? 'active' : ''}" data-model="cerebras" title="Cerebras Llama 3.3 70B - Fast inference">
+              <span class="model-icon">&#x26A1;</span>
+              <span class="model-name">Cerebras</span>
+            </button>
+            <button type="button" class="model-option ${currentModel === 'claude' ? 'active' : ''}" data-model="claude" title="Claude Opus 4.5 - Advanced reasoning">
+              <span class="model-icon">&#x2728;</span>
+              <span class="model-name">Claude</span>
+            </button>
+          </div>
         </div>
       </div>
       <form class="conversation-bar-form" id="conversation-form">
@@ -76,6 +85,40 @@ export default function decorate(block) {
   const submitBtn = block.querySelector('.conversation-bar-submit');
   const chips = block.querySelectorAll('.conversation-chip');
   const modelButtons = block.querySelectorAll('.model-option');
+  const ragToggleBtn = block.querySelector('.rag-toggle-btn');
+
+  // RAG toggle click handler
+  if (ragToggleBtn) {
+    ragToggleBtn.addEventListener('click', () => {
+      if (window.SessionContextManager) {
+        const newState = window.SessionContextManager.toggleRAG();
+        // Update UI
+        ragToggleBtn.classList.toggle('active', newState);
+        const icon = ragToggleBtn.querySelector('.rag-icon');
+        if (icon) {
+          icon.innerHTML = newState ? '&#x1F50D;' : '&#x26D4;';
+        }
+        ragToggleBtn.title = newState
+          ? 'RAG enabled - Using vector search'
+          : 'RAG disabled - Using static data only';
+      }
+    });
+  }
+
+  // Listen for RAG changes from elsewhere
+  window.addEventListener('rag-changed', (e) => {
+    const { enabled } = e.detail;
+    if (ragToggleBtn) {
+      ragToggleBtn.classList.toggle('active', enabled);
+      const icon = ragToggleBtn.querySelector('.rag-icon');
+      if (icon) {
+        icon.innerHTML = enabled ? '&#x1F50D;' : '&#x26D4;';
+      }
+      ragToggleBtn.title = enabled
+        ? 'RAG enabled - Using vector search'
+        : 'RAG disabled - Using static data only';
+    }
+  });
 
   // Model selector click handlers
   modelButtons.forEach((btn) => {

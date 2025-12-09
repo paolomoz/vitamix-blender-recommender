@@ -25,10 +25,12 @@ async function handleStream(request: Request, env: Env): Promise<Response> {
   const contextParam = url.searchParams.get('ctx') || '';
   const stage = url.searchParams.get('stage') || 'exploring';
   const modelParam = url.searchParams.get('model') || 'claude';
+  const ragParam = url.searchParams.get('rag') || url.searchParams.get('useRAG') || 'true';
 
   // Validate model parameter
   const model: LLMModel = modelParam === 'cerebras' ? 'cerebras' : 'claude';
-  console.log(`[Worker] Using model: ${model}`);
+  const useRAG = ragParam.toLowerCase() !== 'false' && ragParam !== '0';
+  console.log(`[Worker] Using model: ${model}, RAG: ${useRAG ? 'enabled' : 'disabled'}`);
 
   // Handle empty query - default to discovery mode
   const effectiveQuery = query || 'help me find the right Vitamix';
@@ -57,8 +59,9 @@ async function handleStream(request: Request, env: Env): Promise<Response> {
 
       // Classify intent
       console.log(`[Worker] Classifying intent for: "${effectiveQuery}"`);
-      const intent = await classifyIntent(effectiveQuery, sessionContext, env, model);
+      const intent = await classifyIntent(effectiveQuery, sessionContext, env, model, useRAG);
       console.log(`[Worker] Intent: ${intent.primary}, Blocks: ${intent.suggestedBlocks.join(', ')}`);
+      console.log(`[Worker] Entities:`, JSON.stringify(intent.entities));
 
       // Start generating follow-ups and insights in parallel with blocks
       const followUpsPromise = generateFollowUps(effectiveQuery, intent, sessionContext, env, model);
@@ -148,6 +151,73 @@ async function handleStream(request: Request, env: Env): Promise<Response> {
       ...corsHeaders,
     },
   });
+}
+
+/**
+ * Compare intent classification with and without RAG
+ */
+async function handleCompareRAG(request: Request, env: Env): Promise<Response> {
+  const url = new URL(request.url);
+  const query = url.searchParams.get('query') || url.searchParams.get('q') || 'Compare Ascent X4 with other Vitamix models';
+  const modelParam = url.searchParams.get('model') || 'claude';
+  const model: LLMModel = modelParam === 'cerebras' ? 'cerebras' : 'claude';
+
+  try {
+    console.log(`\n${'='.repeat(60)}`);
+    console.log(`[RAG Comparison] Testing query: "${query}"`);
+    console.log('='.repeat(60));
+
+    // Run WITHOUT RAG
+    console.log('\n🚫 Running WITHOUT RAG...');
+    const intentWithoutRAG = await classifyIntent(query, null, env, model, false);
+
+    // Run WITH RAG
+    console.log('\n✅ Running WITH RAG...');
+    const intentWithRAG = await classifyIntent(query, null, env, model, true);
+
+    console.log(`\n${'='.repeat(60)}`);
+    console.log('[RAG Comparison] Results:');
+    console.log('='.repeat(60));
+
+    const comparison = {
+      query,
+      model,
+      withoutRAG: {
+        primary: intentWithoutRAG.primary,
+        entities: intentWithoutRAG.entities,
+        journeyStage: intentWithoutRAG.journeyStage,
+        suggestedBlocks: intentWithoutRAG.suggestedBlocks,
+      },
+      withRAG: {
+        primary: intentWithRAG.primary,
+        entities: intentWithRAG.entities,
+        journeyStage: intentWithRAG.journeyStage,
+        suggestedBlocks: intentWithRAG.suggestedBlocks,
+      },
+      differences: {
+        primary: intentWithoutRAG.primary !== intentWithRAG.primary,
+        products: JSON.stringify(intentWithoutRAG.entities.products) !== JSON.stringify(intentWithRAG.entities.products),
+        useCases: JSON.stringify(intentWithoutRAG.entities.useCases) !== JSON.stringify(intentWithRAG.entities.useCases),
+        blocks: JSON.stringify(intentWithoutRAG.suggestedBlocks) !== JSON.stringify(intentWithRAG.suggestedBlocks),
+      }
+    };
+
+    console.log('\nWithout RAG:', JSON.stringify(comparison.withoutRAG, null, 2));
+    console.log('\nWith RAG:', JSON.stringify(comparison.withRAG, null, 2));
+    console.log('\nDifferences:', JSON.stringify(comparison.differences, null, 2));
+
+    return new Response(JSON.stringify(comparison, null, 2), {
+      headers: { 'Content-Type': 'application/json', ...corsHeaders },
+    });
+  } catch (error) {
+    console.error('[RAG Comparison] Error:', error);
+    return new Response(JSON.stringify({
+      error: error instanceof Error ? error.message : 'Comparison failed',
+    }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json', ...corsHeaders },
+    });
+  }
 }
 
 /**
@@ -265,6 +335,9 @@ export default {
     switch (path) {
       case '/api/stream':
         return handleStream(request, env);
+      case '/api/compare-rag':
+        // Debug endpoint to compare intent with/without RAG
+        return handleCompareRAG(request, env);
       case '/api/index':
         // Admin endpoint to trigger RAG indexing
         return handleIndexing(request, env);

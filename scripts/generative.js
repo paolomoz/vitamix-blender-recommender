@@ -55,6 +55,7 @@ function simpleHash(str) {
 class SessionContextManager {
   static STORAGE_KEY = 'vitamix-session';
   static MODEL_KEY = 'vitamix-model';
+  static RAG_KEY = 'vitamix-rag';
   static MAX_QUERIES = 10;
 
   /**
@@ -82,6 +83,41 @@ class SessionContextManager {
     } catch (e) {
       console.warn('[Model] Failed to save model:', e);
     }
+  }
+
+  /**
+   * Get whether RAG is enabled (persisted in sessionStorage)
+   * Default is true (enabled)
+   */
+  static getRAGEnabled() {
+    try {
+      const stored = sessionStorage.getItem(this.RAG_KEY);
+      return stored === null ? true : stored === 'true';
+    } catch {
+      return true;
+    }
+  }
+
+  /**
+   * Set whether RAG is enabled (persisted in sessionStorage)
+   */
+  static setRAGEnabled(enabled) {
+    try {
+      sessionStorage.setItem(this.RAG_KEY, enabled ? 'true' : 'false');
+      console.log(`[RAG] ${enabled ? 'Enabled' : 'Disabled'}`);
+      window.dispatchEvent(new CustomEvent('rag-changed', { detail: { enabled } }));
+    } catch (e) {
+      console.warn('[RAG] Failed to save setting:', e);
+    }
+  }
+
+  /**
+   * Toggle RAG on/off
+   */
+  static toggleRAG() {
+    const current = this.getRAGEnabled();
+    this.setRAGEnabled(!current);
+    return !current;
   }
 
   static getContext() {
@@ -510,12 +546,13 @@ async function renderGenerativePage() {
   const contextParam = SessionContextManager.buildEncodedContextParam();
   const journeyStage = SessionContextManager.getJourneyStage();
   const selectedModel = SessionContextManager.getModel();
+  const ragEnabled = SessionContextManager.getRAGEnabled();
 
   // Connect to SSE stream
-  const streamUrl = `${WORKER_URL}/api/stream?slug=${encodeURIComponent(slug)}&query=${encodeURIComponent(query)}&ctx=${contextParam}&stage=${journeyStage}&model=${selectedModel}`;
+  const streamUrl = `${WORKER_URL}/api/stream?slug=${encodeURIComponent(slug)}&query=${encodeURIComponent(query)}&ctx=${contextParam}&stage=${journeyStage}&model=${selectedModel}&rag=${ragEnabled}`;
   const eventSource = new EventSource(streamUrl);
 
-  console.log(`[Generative] Using model: ${selectedModel}`);
+  console.log(`[Generative] Using model: ${selectedModel}, RAG: ${ragEnabled ? 'enabled' : 'disabled'}`);
 
   console.log(`[Generative] Starting SSE stream for: ${query}`);
 

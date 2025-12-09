@@ -58,7 +58,8 @@ export async function classifyIntent(
   query: string,
   context: SessionContext | null,
   env: Env,
-  model: LLMModel = 'cerebras'
+  model: LLMModel = 'cerebras',
+  useRAG: boolean = true
 ): Promise<Intent> {
   // Determine journey stage from context
   // Note: Context is encoded with 'q' for queries and 'p' for profile
@@ -82,18 +83,25 @@ export async function classifyIntent(
   try {
     // RAG: Retrieve relevant product context if vector store is populated
     let ragContext = '';
+    let ragResults: any[] = [];
     const store = getVectorStore();
-    if (store.size() > 0 && (env.AI || env.OPENAI_API_KEY)) {
+    if (useRAG && store.size() > 0 && (env.AI || env.OPENAI_API_KEY)) {
       try {
-        console.log('[Intent] Retrieving RAG context...');
+        console.log('[Intent] 🔍 Retrieving RAG context...');
         const results = await retrieveContext(query, env, { topK: 3, minScore: 0.6 });
         if (results.length > 0) {
+          ragResults = results;
           ragContext = '\n\n' + formatContextForLLM(results);
-          console.log(`[Intent] Added ${results.length} RAG results to context`);
+          console.log(`[Intent] ✅ Added ${results.length} RAG results to context`);
+          console.log('[Intent] RAG Products:', results.map(r => r.chunk.metadata.productTitle).join(', '));
+        } else {
+          console.log('[Intent] ⚠️  No RAG results above threshold');
         }
       } catch (error) {
-        console.warn('[Intent] RAG retrieval failed, continuing without RAG:', error);
+        console.warn('[Intent] ❌ RAG retrieval failed, continuing without RAG:', error);
       }
+    } else if (!useRAG) {
+      console.log('[Intent] 🚫 RAG disabled for this request');
     }
 
     const enhancedSystemPrompt = ragContext
