@@ -9,6 +9,11 @@ ENVIRONMENT = "development"
 [ai]
 binding = "AI"
 
+# Cloudflare Vectorize binding for persistent vector storage
+[[vectorize]]
+binding = "VECTORIZE"
+index_name = "vitamix-products"
+
 # Secrets (set via wrangler secret put):
 # - CEREBRAS_KEY
 # - ANTHROPIC_API_KEY

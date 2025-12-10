@@ -17,25 +17,25 @@ export async function retrieveContext(
   env: Env,
   options: RetrievalOptions = {}
 ): Promise<VectorSearchResult[]> {
-  const store = getVectorStore();
-
-  // Check if store is empty
-  if (store.size() === 0) {
-    console.warn('[RAG Retrieval] Vector store is empty. Did you index the products?');
-    return [];
-  }
+  const store = getVectorStore(env);
 
   // Generate embedding for the query
   const queryEmbedding = await generateEmbedding(query, env);
 
   // Search for similar chunks
-  const results = store.search(queryEmbedding, {
+  // Note: Vectorize doesn't expose count, so we attempt the query
+  // and will get empty results if no data is indexed
+  const results = await store.search(queryEmbedding, {
     topK: options.topK || 5,
     filter: options.filter,
     minScore: options.minScore || 0.5,
   });
 
-  console.log(`[RAG Retrieval] Retrieved ${results.length} chunks for query: "${query.substring(0, 50)}..."`);
+  if (results.length === 0) {
+    console.warn('[RAG Retrieval] No results found. Vector store may be empty or no matches above threshold.');
+  } else {
+    console.log(`[RAG Retrieval] Retrieved ${results.length} chunks for query: "${query.substring(0, 50)}..."`);
+  }
 
   return results;
 }

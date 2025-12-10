@@ -81,13 +81,13 @@ export async function classifyIntent(
     : `Query: "${query}"`;
 
   try {
-    // RAG: Retrieve relevant product context if vector store is populated
+    // RAG: Retrieve relevant product context from Vectorize
     let ragContext = '';
     let ragResults: any[] = [];
-    const store = getVectorStore();
-    if (useRAG && store.size() > 0 && (env.AI || env.OPENAI_API_KEY)) {
+
+    if (useRAG) {
       try {
-        console.log('[Intent] 🔍 Retrieving RAG context...');
+        console.log('[Intent] 🔍 Retrieving RAG context from Vectorize...');
         const results = await retrieveContext(query, env, { topK: 3, minScore: 0.6 });
         if (results.length > 0) {
           ragResults = results;
@@ -95,12 +95,12 @@ export async function classifyIntent(
           console.log(`[Intent] ✅ Added ${results.length} RAG results to context`);
           console.log('[Intent] RAG Products:', results.map(r => r.chunk.metadata.productTitle).join(', '));
         } else {
-          console.log('[Intent] ⚠️  No RAG results above threshold');
+          console.log('[Intent] ⚠️  No RAG results found (may be empty index or no matches above threshold)');
         }
       } catch (error) {
         console.warn('[Intent] ❌ RAG retrieval failed, continuing without RAG:', error);
       }
-    } else if (!useRAG) {
+    } else {
       console.log('[Intent] 🚫 RAG disabled for this request');
     }
 

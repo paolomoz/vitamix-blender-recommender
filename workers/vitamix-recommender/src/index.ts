@@ -167,6 +167,17 @@ async function handleCompareRAG(request: Request, env: Env): Promise<Response> {
     console.log(`[RAG Comparison] Testing query: "${query}"`);
     console.log('='.repeat(60));
 
+    // Test RAG retrieval first
+    console.log('\n🔍 Testing RAG retrieval...');
+    const { retrieveContext } = await import('./rag');
+    let ragTestResults: any[] = [];
+    try {
+      ragTestResults = await retrieveContext(query, env, { topK: 3, minScore: 0.6 });
+      console.log(`[RAG Test] Found ${ragTestResults.length} results`);
+    } catch (error) {
+      console.error('[RAG Test] Error:', error);
+    }
+
     // Run WITHOUT RAG
     console.log('\n🚫 Running WITHOUT RAG...');
     const intentWithoutRAG = await classifyIntent(query, null, env, model, false);
@@ -182,6 +193,15 @@ async function handleCompareRAG(request: Request, env: Env): Promise<Response> {
     const comparison = {
       query,
       model,
+      ragTest: {
+        resultsFound: ragTestResults.length,
+        topResults: ragTestResults.slice(0, 2).map(r => ({
+          product: r.chunk.metadata.productTitle,
+          type: r.chunk.metadata.type,
+          score: r.score,
+          contentPreview: r.chunk.content.substring(0, 100),
+        })),
+      },
       withoutRAG: {
         primary: intentWithoutRAG.primary,
         entities: intentWithoutRAG.entities,
@@ -223,14 +243,16 @@ async function handleCompareRAG(request: Request, env: Env): Promise<Response> {
 /**
  * Handle health check
  */
-function handleHealth(): Response {
-  const store = getVectorStore();
+async function handleHealth(env: Env): Promise<Response> {
+  const store = getVectorStore(env);
+  const hasData = await store.hasData();
+
   return new Response(JSON.stringify({
     status: 'ok',
     service: 'vitamix-recommender',
     rag: {
-      indexed: store.size() > 0,
-      chunks: store.size(),
+      indexed: hasData,
+      note: 'Vectorize index verified by test query',
     },
   }), {
     headers: { 'Content-Type': 'application/json', ...corsHeaders },
@@ -240,13 +262,13 @@ function handleHealth(): Response {
 /**
  * View indexed chunks (admin endpoint)
  */
-function handleViewIndex(request: Request): Response {
+function handleViewIndex(request: Request, env: Env): Response {
   const url = new URL(request.url);
   const limit = parseInt(url.searchParams.get('limit') || '50', 10);
   const type = url.searchParams.get('type'); // Filter by type
   const product = url.searchParams.get('product'); // Filter by product title
 
-  const store = getVectorStore();
+  const store = getVectorStore(env);
   let chunks = store.getAllChunks();
 
   // Apply filters
@@ -343,10 +365,10 @@ export default {
         return handleIndexing(request, env);
       case '/api/view-index':
         // Admin endpoint to view indexed chunks
-        return handleViewIndex(request);
+        return handleViewIndex(request, env);
       case '/health':
       case '/':
-        return handleHealth();
+        return handleHealth(env);
       default:
         return new Response(JSON.stringify({ error: 'Not found' }), {
           status: 404,

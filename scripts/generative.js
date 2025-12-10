@@ -13,10 +13,8 @@ import {
   loadCSS,
 } from './aem.js';
 
-// Worker URL (use localhost for development)
-const WORKER_URL = window.location.hostname === 'localhost'
-  ? 'http://localhost:8787'
-  : 'https://vitamix-recommender.paolo-moz.workers.dev';
+// Worker URL (use deployed worker with Cloudflare Vectorize)
+const WORKER_URL = 'https://vitamix-recommender.mtilburg.workers.dev';
 
 // Store original block data for publishing
 let originalBlocksData = [];

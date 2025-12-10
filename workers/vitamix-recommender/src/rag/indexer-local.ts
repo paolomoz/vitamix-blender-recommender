@@ -128,9 +128,9 @@ export async function indexProductsLocal(
 
     // Step 3: Add to vector store
     console.log('[RAG Indexer Local] Adding to vector store...');
-    const store = getVectorStore();
-    store.clear();
-    store.addChunks(chunksWithEmbeddings);
+    const store = getVectorStore(env);
+    await store.clear();
+    await store.addChunks(chunksWithEmbeddings);
 
     console.log(`[RAG Indexer Local] ✅ Successfully indexed ${chunksWithEmbeddings.length} chunks from ${products.length} products`);
 

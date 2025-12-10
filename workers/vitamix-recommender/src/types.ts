@@ -11,6 +11,45 @@ export interface Env {
   DA_IMS_TOKEN: string;
   ENVIRONMENT: string;
   AI?: any; // Cloudflare Workers AI binding
+  VECTORIZE?: VectorizeIndex; // Cloudflare Vectorize binding
+}
+
+// Cloudflare Vectorize types
+export interface VectorizeIndex {
+  query(vector: number[], options?: VectorizeQueryOptions): Promise<VectorizeMatches>;
+  insert(vectors: VectorizeVector[]): Promise<VectorizeInsertResponse>;
+  getByIds(ids: string[]): Promise<VectorizeVector[]>;
+  deleteByIds(ids: string[]): Promise<void>;
+}
+
+export interface VectorizeQueryOptions {
+  topK?: number;
+  filter?: Record<string, any>;
+  returnValues?: boolean;
+  returnMetadata?: boolean | string;
+}
+
+export interface VectorizeMatches {
+  matches: VectorizeMatch[];
+  count: number;
+}
+
+export interface VectorizeMatch {
+  id: string;
+  score: number;
+  values?: number[];
+  metadata?: Record<string, any>;
+}
+
+export interface VectorizeVector {
+  id: string;
+  values: number[];
+  metadata?: Record<string, any>;
+}
+
+export interface VectorizeInsertResponse {
+  ids: string[];
+  count: number;
 }
 
 export type LLMModel = 'cerebras' | 'claude';

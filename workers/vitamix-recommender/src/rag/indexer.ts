@@ -50,9 +50,9 @@ export async function indexProducts(
 
     // Step 5: Add to vector store
     console.log('[RAG Indexer] Step 5: Adding to vector store...');
-    const store = getVectorStore();
-    store.clear(); // Clear existing data
-    store.addChunks(chunksWithEmbeddings);
+    const store = getVectorStore(env);
+    await store.clear(); // Clear existing data
+    await store.addChunks(chunksWithEmbeddings);
 
     console.log(`[RAG Indexer] ✅ Successfully indexed ${chunksWithEmbeddings.length} chunks from ${products.length} products`);
 

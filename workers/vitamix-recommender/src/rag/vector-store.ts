@@ -1,122 +1,245 @@
 /**
- * In-Memory Vector Store for POC
- * Stores chunks with embeddings and performs similarity search
+ * Vector Store with Cloudflare Vectorize
+ * Stores chunks with embeddings in persistent Vectorize index
  */
 
 import type { DocumentChunk, VectorSearchResult, RetrievalOptions } from './types';
+import type { Env, VectorizeVector } from '../types';
 import { cosineSimilarity } from './embeddings';
 
 /**
- * Simple in-memory vector store
+ * Vector store using Cloudflare Vectorize for persistence
  */
 export class VectorStore {
-  private chunks: DocumentChunk[] = [];
+  private env: Env;
+  private chunkCount: number = 0;
 
-  constructor() {
-    console.log('[RAG VectorStore] Initialized');
+  constructor(env: Env) {
+    this.env = env;
+    console.log('[RAG VectorStore] Initialized with Cloudflare Vectorize');
   }
 
   /**
-   * Add chunks to the store
+   * Add chunks to the Vectorize index
    */
-  addChunks(chunks: DocumentChunk[]): void {
-    this.chunks.push(...chunks);
-    console.log(`[RAG VectorStore] Added ${chunks.length} chunks (total: ${this.chunks.length})`);
+  async addChunks(chunks: DocumentChunk[]): Promise<void> {
+    if (!this.env.VECTORIZE) {
+      throw new Error('Vectorize binding not available');
+    }
+
+    if (chunks.length === 0) {
+      console.log('[RAG VectorStore] No chunks to add');
+      return;
+    }
+
+    try {
+      // Convert chunks to Vectorize format
+      const vectors: VectorizeVector[] = chunks
+        .filter(chunk => chunk.embedding && chunk.embedding.length > 0)
+        .map(chunk => ({
+          id: chunk.id,
+          values: chunk.embedding!,
+          metadata: {
+            content: chunk.content,
+            type: chunk.metadata.type,
+            productUrl: chunk.metadata.productUrl,
+            productTitle: chunk.metadata.productTitle,
+            section: chunk.metadata.section || '',
+          },
+        }));
+
+      if (vectors.length === 0) {
+        console.log('[RAG VectorStore] No chunks with embeddings to add');
+        return;
+      }
+
+      // Insert vectors in batches (Vectorize has limits)
+      const batchSize = 100;
+      for (let i = 0; i < vectors.length; i += batchSize) {
+        const batch = vectors.slice(i, i + batchSize);
+        await this.env.VECTORIZE.insert(batch);
+        console.log(`[RAG VectorStore] Inserted batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(vectors.length / batchSize)}`);
+      }
+
+      this.chunkCount += vectors.length;
+      console.log(`[RAG VectorStore] Added ${vectors.length} chunks (total: ${this.chunkCount})`);
+    } catch (error) {
+      console.error('[RAG VectorStore] Error adding chunks:', error);
+      throw error;
+    }
   }
 
   /**
-   * Clear all chunks
+   * Clear all chunks from the index
+   * Note: Vectorize doesn't have a clear() method, so we track IDs separately
    */
-  clear(): void {
-    this.chunks = [];
-    console.log('[RAG VectorStore] Cleared all chunks');
+  async clear(): Promise<void> {
+    console.warn('[RAG VectorStore] Clear operation not fully supported with Vectorize');
+    console.warn('[RAG VectorStore] Consider recreating the index or using deleteByIds with known IDs');
+    this.chunkCount = 0;
   }
 
   /**
-   * Get total number of chunks
+   * Get estimated number of chunks
+   * Note: Vectorize doesn't expose count, so this returns a cached value
+   * For deployed workers, this will always return 0 unless we query
    */
   size(): number {
-    return this.chunks.length;
+    return this.chunkCount;
   }
 
   /**
-   * Search for similar chunks
+   * Check if the index has any data by doing a test query
+   * Returns true if at least one vector exists
    */
-  search(
+  async hasData(): Promise<boolean> {
+    if (!this.env.VECTORIZE) {
+      return false;
+    }
+
+    try {
+      // Create a dummy vector for testing (768 dimensions of 0s)
+      const testVector = new Array(768).fill(0);
+      const results = await this.env.VECTORIZE.query(testVector, {
+        topK: 1,
+        returnMetadata: false,
+      });
+      return results.matches.length > 0;
+    } catch (error) {
+      console.error('[RAG VectorStore] Error checking if index has data:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Search for similar chunks using Vectorize
+   */
+  async search(
     queryEmbedding: number[],
     options: RetrievalOptions = {}
-  ): VectorSearchResult[] {
+  ): Promise<VectorSearchResult[]> {
+    if (!this.env.VECTORIZE) {
+      throw new Error('Vectorize binding not available');
+    }
+
     const {
       topK = 5,
       filter,
       minScore = 0.0,
     } = options;
 
-    // Filter chunks if needed
-    let filteredChunks = this.chunks;
-    if (filter) {
-      filteredChunks = this.chunks.filter(chunk => {
-        if (filter.type && chunk.metadata.type !== filter.type) return false;
-        if (filter.productUrl && chunk.metadata.productUrl !== filter.productUrl) return false;
-        return true;
+    try {
+      // Build Vectorize filter if needed
+      const vectorizeFilter: Record<string, any> = {};
+      if (filter?.type) {
+        vectorizeFilter.type = filter.type;
+      }
+      if (filter?.productUrl) {
+        vectorizeFilter.productUrl = filter.productUrl;
+      }
+
+      // Query Vectorize
+      const results = await this.env.VECTORIZE.query(queryEmbedding, {
+        topK: topK * 2, // Get extra results to filter by minScore
+        returnMetadata: true,
+        filter: Object.keys(vectorizeFilter).length > 0 ? vectorizeFilter : undefined,
       });
+
+      // Convert Vectorize matches to VectorSearchResult
+      const searchResults: VectorSearchResult[] = results.matches
+        .filter(match => match.score >= minScore)
+        .slice(0, topK)
+        .map(match => ({
+          chunk: {
+            id: match.id,
+            content: match.metadata?.content || '',
+            metadata: {
+              type: match.metadata?.type || 'product',
+              productUrl: match.metadata?.productUrl || '',
+              productTitle: match.metadata?.productTitle || '',
+              section: match.metadata?.section,
+            },
+            embedding: match.values,
+          },
+          score: match.score,
+        }));
+
+      console.log(`[RAG VectorStore] Search returned ${searchResults.length} results`);
+
+      return searchResults;
+    } catch (error) {
+      console.error('[RAG VectorStore] Error searching:', error);
+      throw error;
     }
-
-    // Calculate similarity scores
-    const results: VectorSearchResult[] = filteredChunks
-      .filter(chunk => chunk.embedding !== undefined)
-      .map(chunk => ({
-        chunk,
-        score: cosineSimilarity(queryEmbedding, chunk.embedding!),
-      }))
-      .filter(result => result.score >= minScore)
-      .sort((a, b) => b.score - a.score)
-      .slice(0, topK);
-
-    console.log(`[RAG VectorStore] Search returned ${results.length} results (filtered from ${filteredChunks.length} chunks)`);
-
-    return results;
   }
 
   /**
    * Get all chunks (for debugging)
+   * Note: Limited implementation with Vectorize - returns empty array
    */
   getAllChunks(): DocumentChunk[] {
-    return [...this.chunks];
+    console.warn('[RAG VectorStore] getAllChunks not supported with Vectorize');
+    return [];
   }
 
   /**
-   * Get chunk by ID
+   * Get chunk by ID using Vectorize
    */
-  getChunkById(id: string): DocumentChunk | undefined {
-    return this.chunks.find(chunk => chunk.id === id);
+  async getChunkById(id: string): Promise<DocumentChunk | undefined> {
+    if (!this.env.VECTORIZE) {
+      return undefined;
+    }
+
+    try {
+      const results = await this.env.VECTORIZE.getByIds([id]);
+      if (results.length === 0) {
+        return undefined;
+      }
+
+      const vector = results[0];
+      return {
+        id: vector.id,
+        content: vector.metadata?.content || '',
+        metadata: {
+          type: vector.metadata?.type || 'product',
+          productUrl: vector.metadata?.productUrl || '',
+          productTitle: vector.metadata?.productTitle || '',
+          section: vector.metadata?.section,
+        },
+        embedding: vector.values,
+      };
+    } catch (error) {
+      console.error('[RAG VectorStore] Error getting chunk by ID:', error);
+      return undefined;
+    }
   }
 
   /**
-   * Export store data (for persistence)
+   * Export store data (not supported with Vectorize)
    */
   export(): DocumentChunk[] {
-    return this.chunks;
+    console.warn('[RAG VectorStore] Export not supported with Vectorize');
+    return [];
   }
 
   /**
-   * Import store data (for restoration)
+   * Import store data (use addChunks instead)
    */
-  import(chunks: DocumentChunk[]): void {
-    this.chunks = chunks;
-    console.log(`[RAG VectorStore] Imported ${chunks.length} chunks`);
+  async import(chunks: DocumentChunk[]): Promise<void> {
+    console.log(`[RAG VectorStore] Importing ${chunks.length} chunks via addChunks`);
+    await this.addChunks(chunks);
   }
 }
 
-// Global singleton for POC
-let globalStore: VectorStore | null = null;
+// Store reference by env (keyed approach)
+const storeCache = new WeakMap<Env, VectorStore>();
 
 /**
- * Get or create the global vector store
+ * Get or create vector store for this env
  */
-export function getVectorStore(): VectorStore {
-  if (!globalStore) {
-    globalStore = new VectorStore();
+export function getVectorStore(env: Env): VectorStore {
+  if (!storeCache.has(env)) {
+    storeCache.set(env, new VectorStore(env));
   }
-  return globalStore;
+  return storeCache.get(env)!;
 }
